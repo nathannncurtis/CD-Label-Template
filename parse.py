@@ -1,9 +1,16 @@
+import sys
 import os
 import time
 import fitz
 import subprocess
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+
+# Determine the name of the executable or script to call
+main_script = 'main.py' if not getattr(sys, 'frozen', False) else 'main.exe'
+
+# Full path to the main script or executable
+main_path = os.path.join(os.path.dirname(sys.executable), main_script)
 
 class PDFHandler(FileSystemEventHandler):
     def __init__(self, folder_to_monitor):
@@ -45,9 +52,9 @@ class PDFHandler(FileSystemEventHandler):
                 re_field = doc[6].get_text().strip() if doc.page_count > 6 else ""
                 dob = doc[7].get_text().strip() if doc.page_count > 7 else ""
 
-                # Call main.py with parsed data as command-line arguments
+                # Call main with parsed data as command-line arguments
                 subprocess.run([
-                    'python', 'main.py',
+                    sys.executable, main_path,
                     '--facility', facility,
                     '--case', case,
                     '--wo_number', wo_number,
@@ -60,6 +67,13 @@ class PDFHandler(FileSystemEventHandler):
 
         except Exception as e:
             print(f"Failed to process {pdf_path}: {e}")
+
+        # Delete PDF after parsing and passing
+            try: 
+                os.remove(pdf_path)
+                print("Deteled pdf")
+            except Exception as e: 
+                print(f"Failed to delete {pdf_path}: {e:}")
 
 def start_monitoring(folder_to_monitor):
     """Set up folder monitoring for new PDF files."""
