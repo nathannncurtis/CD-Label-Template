@@ -2,6 +2,10 @@ import os
 import sys
 import argparse
 
+# Supress all output
+sys.stdout = open(os.devnull, 'w')
+sys.stderr = open(os.devnull, 'w')
+
 # Parse command-line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--facility', type=str, required=False)

@@ -7,6 +7,10 @@ import subprocess
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+# Supress all output
+sys.stdout = open(os.devnull, 'w')
+sys.stderr = open(os.devnull, 'w')
+
 # Determine the directory where parse.py is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
