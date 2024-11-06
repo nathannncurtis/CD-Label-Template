@@ -1,3 +1,5 @@
+import os
+import sys
 import argparse
 
 # Parse command-line arguments
@@ -11,6 +13,27 @@ parser.add_argument('--attn', type=str, required=False)
 parser.add_argument('--re_field', type=str, required=False)
 parser.add_argument('--dob', type=str, required=False)
 args = parser.parse_args()
+
+# Function to read configuration from a text file
+def read_config(file_path=".config"):
+    config = {}
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                if line.strip() and '=' in line:
+                    key, value = line.strip().split('=', 1)
+                    config[key.strip()] = value.strip()
+        # Extract specific folders from the config
+        output_folder = config.get("output_folder")
+        if not output_folder:
+            raise ValueError("'output_folder' must be specified in the config file.")
+        return output_folder
+    except Exception as e:
+        print(f"Failed to read configuration file: {e}")
+        sys.exit(1)  # Exit if config is not properly set
+
+# Get output folder from config file
+output_folder = read_config()
 
 # Function to handle data insertion with either arguments or user input
 def get_or_prompt(input_data, prompt_text):
@@ -98,7 +121,7 @@ dob_bytes = dob_input.encode('ascii')
 file_data = file_data[:new_dob_offset] + dob_bytes + file_data[new_dob_offset:]
 
 # Write the modified file data back to a new .tdd file
-output_filename = f"{re_input}.tdd"
+output_filename = os.path.join(output_folder, f"{re_input}.tdd")
 with open(output_filename, "wb") as file:
     file.write(file_data)
 

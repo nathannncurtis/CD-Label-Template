@@ -16,6 +16,28 @@ main_script = 'main.py' if not getattr(sys, 'frozen', False) else 'main.exe'
 # Full path to the main script or executable, relative to parse.py's location
 main_path = os.path.join(script_dir, main_script)
 
+# Function to read configuration from a text file
+def read_config(file_path=".config"):
+    config = {}
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                if line.strip() and '=' in line:
+                    key, value = line.strip().split('=', 1)
+                    config[key.strip()] = value.strip()
+        # Extract specific folders from the config
+        monitor_folder = config.get("monitor_folder")
+        output_folder = config.get("output_folder")
+        if not monitor_folder or not output_folder:
+            raise ValueError("Both 'monitor_folder' and 'output_folder' must be specified in the config file.")
+        return monitor_folder, output_folder
+    except Exception as e:
+        print(f"Failed to read configuration file: {e}")
+        sys.exit(1)  # Exit if config is not properly set
+
+# Call read_config() to get paths for the folders
+monitor_folder, output_folder = read_config()
+
 def defluff_re_field(re_field):
     """Removes any text after 'AKA' in the re_field, if 'AKA' is present."""
     # Use regex to find ' AKA ' and capture everything before it
@@ -99,5 +121,5 @@ def start_monitoring(folder_to_monitor):
 
 if __name__ == "__main__":
     # Define the folder to monitor (update this path as needed)
-    folder_to_monitor = r'\\NAS-PROD\Production\DIGIBOX\Nathan\(00) ASSIGNMENTS'
+    folder_to_monitor = monitor_folder
     start_monitoring(folder_to_monitor)
