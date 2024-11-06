@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import time
 import fitz
 import subprocess
@@ -14,6 +15,14 @@ main_script = 'main.py' if not getattr(sys, 'frozen', False) else 'main.exe'
 
 # Full path to the main script or executable, relative to parse.py's location
 main_path = os.path.join(script_dir, main_script)
+
+def defluff_re_field(re_field):
+    """Removes any text after 'AKA' in the re_field, if 'AKA' is present."""
+    # Use regex to find ' AKA ' and capture everything before it
+    match = re.search(r"(.+?)\s+AKA", re_field, re.IGNORECASE)
+    if match:
+        return match.group(1).strip()  # Return text before ' AKA '
+    return re_field.strip()  # If 'AKA' not found, return the original string
 
 class PDFHandler(FileSystemEventHandler):
     def __init__(self, folder_to_monitor):
@@ -49,9 +58,7 @@ class PDFHandler(FileSystemEventHandler):
                 file_number = doc[3].get_text().strip()  # Page 4
                 claim = doc[4].get_text().strip()  # Page 5
                 attn = doc[5].get_text().strip()  # Page 6
-
-                # Assuming page 7 is `Re:` and page 8 is `DOB:`
-                re_field = doc[6].get_text().strip() if doc.page_count > 6 else ""
+                re_field = defluff_re_field(doc[6].get_text().strip()) if doc.page_count > 6 else ""
                 dob = doc[7].get_text().strip() if doc.page_count > 7 else ""
 
                 # Call main with parsed data as command-line arguments
