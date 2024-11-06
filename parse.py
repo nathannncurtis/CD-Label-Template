@@ -6,11 +6,14 @@ import subprocess
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+# Determine the directory where parse.py is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 # Determine the name of the executable or script to call
 main_script = 'main.py' if not getattr(sys, 'frozen', False) else 'main.exe'
 
-# Full path to the main script or executable
-main_path = os.path.join(os.path.dirname(sys.executable), main_script)
+# Full path to the main script or executable, relative to parse.py's location
+main_path = os.path.join(script_dir, main_script)
 
 class PDFHandler(FileSystemEventHandler):
     def __init__(self, folder_to_monitor):
