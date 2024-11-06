@@ -49,8 +49,7 @@ class PDFHandler(FileSystemEventHandler):
                 file_number = doc[3].get_text().strip()  # Page 4
                 claim = doc[4].get_text().strip()  # Page 5
                 attn = doc[5].get_text().strip()  # Page 6
-                
-                # Add Re: and DOB as extracted values from additional pages or text
+
                 # Assuming page 7 is `Re:` and page 8 is `DOB:`
                 re_field = doc[6].get_text().strip() if doc.page_count > 6 else ""
                 dob = doc[7].get_text().strip() if doc.page_count > 7 else ""
@@ -71,12 +70,12 @@ class PDFHandler(FileSystemEventHandler):
         except Exception as e:
             print(f"Failed to process {pdf_path}: {e}")
 
-        # Delete PDF after parsing and passing
-            try: 
-                os.remove(pdf_path)
-                print("Deteled pdf")
-            except Exception as e: 
-                print(f"Failed to delete {pdf_path}: {e:}")
+        # Delete PDF after parsing and passing, regardless of success or failure
+        try:
+            os.remove(pdf_path)
+            print(f"Deleted PDF: {pdf_path}")
+        except Exception as e:
+            print(f"Failed to delete {pdf_path}: {e}")
 
 def start_monitoring(folder_to_monitor):
     """Set up folder monitoring for new PDF files."""
