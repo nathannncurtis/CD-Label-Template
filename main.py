@@ -58,14 +58,14 @@ with open("blank.tdd", "rb") as file:
 
 """""""""Original Offsets from Blank Template File"""""""""
 
-facility_offset = 0x33FA       # Facility starts at 0x3405 in the blank file 
-original_case_offset = 0x3690  # Case starts at 0x369A in the blank file 
-original_wo_offset = 0x3696    # WO# starts at 0x36A0 in the blank file
-original_file_offset = 0x369F  # File# starts at 0x36A9 in the blank file
-original_claim_offset = 0x36A9  # Claim# starts at 0x36B3 in the blank file
-original_attn_offset = 0x36B1   # Attn starts at 0x36BB in the blank file
-original_re_offset = 0x9489     # Re: starts at 0x9493 in the blank file
-original_dob_offset = 0x9490    # DOB: starts at 0x949A in the blank file
+facility_offset = 0x33FA       # Facility starts at 0x33FA in the blank file 
+original_case_offset = 0x3690  # Case starts at 0x3690 in the blank file 
+original_wo_offset = 0x3696    # WO# starts at 0x3696 in the blank file
+original_file_offset = 0x369F  # File# starts at 0x369F in the blank file
+original_claim_offset = 0x36A9  # Claim# starts at 0x36A9 in the blank file
+original_attn_offset = 0x36B1   # Attn starts at 0x36B1 in the blank file
+original_re_offset = 0x9489     # Re: starts at 0x9489 in the blank file
+original_dob_offset = 0x9490    # DOB: starts at 0x9490 in the blank file
 
 # Append carriage return and newline (CRLF) after the Facility input only (I don't know why this works, but it does)
 def append_crlf_to_facility(input_string):
