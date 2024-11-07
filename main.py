@@ -8,8 +8,8 @@ logging.basicConfig(filename="main_log.txt", level=logging.DEBUG)
 logging.debug("Starting main script")
 
 # Supress all output
-# sys.stdout = open(os.devnull, 'w')
-# sys.stderr = open(os.devnull, 'w')
+sys.stdout = open(os.devnull, 'w')
+sys.stderr = open(os.devnull, 'w')
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser()
