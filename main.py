@@ -1,10 +1,15 @@
 import os
 import sys
 import argparse
+import logging
+
+# Initialize logging at the top
+logging.basicConfig(filename="main_log.txt", level=logging.DEBUG)
+logging.debug("Starting main script")
 
 # Supress all output
-sys.stdout = open(os.devnull, 'w')
-sys.stderr = open(os.devnull, 'w')
+# sys.stdout = open(os.devnull, 'w')
+# sys.stderr = open(os.devnull, 'w')
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser()
@@ -27,13 +32,13 @@ def read_config(file_path=".config"):
                 if line.strip() and '=' in line:
                     key, value = line.strip().split('=', 1)
                     config[key.strip()] = value.strip()
-        # Extract specific folders from the config
         output_folder = config.get("output_folder")
         if not output_folder:
             raise ValueError("'output_folder' must be specified in the config file.")
+        logging.debug(f"Output folder from config: {output_folder}")
         return output_folder
     except Exception as e:
-        print(f"Failed to read configuration file: {e}")
+        logging.error(f"Failed to read configuration file: {e}")
         sys.exit(1)  # Exit if config is not properly set
 
 # Get output folder from config file
@@ -53,13 +58,13 @@ with open("blank.tdd", "rb") as file:
 
 """""""""Original Offsets from Blank Template File"""""""""
 
-facility_offset = 0x33F9       # Facility starts at 0x3405 in the blank file 
+facility_offset = 0x33FA       # Facility starts at 0x3405 in the blank file 
 original_case_offset = 0x3690  # Case starts at 0x369A in the blank file 
 original_wo_offset = 0x3696    # WO# starts at 0x36A0 in the blank file
 original_file_offset = 0x369F  # File# starts at 0x36A9 in the blank file
 original_claim_offset = 0x36A9  # Claim# starts at 0x36B3 in the blank file
 original_attn_offset = 0x36B1   # Attn starts at 0x36BB in the blank file
-original_re_offset = 0x9488     # Re: starts at 0x9493 in the blank file
+original_re_offset = 0x9489     # Re: starts at 0x9493 in the blank file
 original_dob_offset = 0x9490    # DOB: starts at 0x949A in the blank file
 
 # Append carriage return and newline (CRLF) after the Facility input only (I don't know why this works, but it does)
@@ -130,3 +135,4 @@ with open(output_filename, "wb") as file:
     file.write(file_data)
 
 print(f"Facility inserted at {hex(facility_offset)}, Case inserted at {hex(new_case_offset)}, WO# inserted at {hex(new_wo_offset)}, File# inserted at {hex(new_file_offset)}, Claim inserted at {hex(new_claim_offset)}, Attn inserted at {hex(new_attn_offset)}, Re: inserted at {hex(new_re_offset)}, DOB inserted at {hex(new_dob_offset)}")
+
