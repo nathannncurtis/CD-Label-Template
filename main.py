@@ -130,7 +130,7 @@ dob_bytes = dob_input.encode('ascii')
 file_data = file_data[:new_dob_offset] + dob_bytes + file_data[new_dob_offset:]
 
 # Write the modified file data back to a new .tdd file
-output_filename = os.path.join(output_folder, f"{re_input}.tdd")
+output_filename = os.path.join(output_folder, f"{wo_input}.tdd")
 with open(output_filename, "wb") as file:
     file.write(file_data)
 
