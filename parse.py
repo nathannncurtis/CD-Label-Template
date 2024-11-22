@@ -50,10 +50,10 @@ def wait_for_file(file_path, timeout=10):
     while time.time() - start_time < timeout:
         if os.path.exists(file_path):
             return True
-        time.sleep(0.5)  # Wait briefly and re-check
+        time.sleep(2)  # Wait briefly and re-check
     return False
 
-def safe_delete(file_path, retries=5, delay=1):
+def safe_delete(file_path, retries=10, delay=2):
     for attempt in range(retries):
         try:
             os.remove(file_path)
@@ -138,7 +138,7 @@ def start_monitoring(folder_to_monitor):
     observer.start()
     try:
         while True:
-            time.sleep(1)
+            time.sleep(2)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
