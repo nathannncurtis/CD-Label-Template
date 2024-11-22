@@ -45,14 +45,6 @@ def read_config(file_path=".config"):
 # Call read_config() to get paths for the folders
 monitor_folder, output_folder = read_config()
 
-def wait_for_file(file_path, timeout=10):
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if os.path.exists(file_path):
-            return True
-        time.sleep(2)  # Wait briefly and re-check
-    return False
-
 def safe_delete(file_path, retries=10, delay=2):
     for attempt in range(retries):
         try:
@@ -84,63 +76,72 @@ class PDFHandler(FileSystemEventHandler):
             self.processed_files.add(event.src_path)
             self.process_pdf(event.src_path)
 
-    def process_pdf(self, pdf_path, max_retries=5, retry_delay=5):
+    def process_pdf(self, pdf_path):
         """Extract text from each page according to the layout and pass it to main.py"""
-        retries = 0
-        while retries < max_retries:
+        try:
+            # Use `with` to open the PDF, ensuring it will close immediately after parsing
+            with fitz.open(pdf_path) as doc:
+                if doc.page_count < 6:
+                    print(f"PDF {pdf_path} does not contain enough pages for parsing.")
+                    return
+
+                # Extract text for each field according to the page layout and store in variables
+                facility = doc[0].get_text().strip()
+                case_lines = doc[1].get_text().splitlines()
+                case = " ".join([line.strip() for line in case_lines if line.strip()])
+                wo_number = doc[2].get_text().strip()
+                file_number = doc[3].get_text().strip()
+                claim = doc[4].get_text().strip()
+                attn = doc[5].get_text().strip()
+                re_field = defluff_re_field(doc[6].get_text().strip()) if doc.page_count > 6 else ""
+                dob = doc[7].get_text().strip() if doc.page_count > 7 else ""
+
+            # Prepare the arguments for the subprocess now that fitz has closed the document
+            args = [
+                '--facility', facility,
+                '--case', case,
+                '--wo_number', wo_number,
+                '--file_number', file_number,
+                '--claim', claim,
+                '--attn', attn,
+                '--re_field', re_field,
+                '--dob', dob
+            ]
+
+            # Run the main executable with the parsed data
+            result = subprocess.run([main_path] + args, shell=True, env=os.environ)
+
+            if result.returncode == 0:
+                print(f"Processing of {pdf_path} completed successfully.")
+            else:
+                print(f"Processing of {pdf_path} failed with return code {result.returncode}.")
+
+        except Exception as e:
+            print(f"Failed to process {pdf_path}: {e}")
+
+        # Ensure the PDF is released before attempting deletion
+        safe_delete(pdf_path)
+
+def retry_unprocessed_pdfs(folder_to_monitor, retry_delay=5):
+    """Continuously retries unprocessed PDFs until the folder is clear."""
+    while True:
+        pdf_files = [f for f in os.listdir(folder_to_monitor) if f.endswith('.pdf')]
+        if not pdf_files:
+            print("All PDFs have been processed.")
+            break
+
+        print(f"Retrying unprocessed PDFs: {pdf_files}")
+        for pdf_file in pdf_files:
+            pdf_path = os.path.join(folder_to_monitor, pdf_file)
             try:
-                # Use `with` to open the PDF, ensuring it will close immediately after parsing
-                with fitz.open(pdf_path) as doc:
-                    if doc.page_count < 6:
-                        print(f"PDF {pdf_path} does not contain enough pages for parsing.")
-                        return
-
-                    # Extract text for each field according to the page layout and store in variables
-                    facility = doc[0].get_text().strip()
-                    case_lines = doc[1].get_text().splitlines()
-                    case = " ".join([line.strip() for line in case_lines if line.strip()])
-                    wo_number = doc[2].get_text().strip()
-                    file_number = doc[3].get_text().strip()
-                    claim = doc[4].get_text().strip()
-                    attn = doc[5].get_text().strip()
-                    re_field = defluff_re_field(doc[6].get_text().strip()) if doc.page_count > 6 else ""
-                    dob = doc[7].get_text().strip() if doc.page_count > 7 else ""
-
-                # Prepare the arguments for the subprocess now that fitz has closed the document
-                args = [
-                    '--facility', facility,
-                    '--case', case,
-                    '--wo_number', wo_number,
-                    '--file_number', file_number,
-                    '--claim', claim,
-                    '--attn', attn,
-                    '--re_field', re_field,
-                    '--dob', dob
-                ]
-
-                # Run the main executable with the parsed data
-                result = subprocess.run([main_path] + args, shell=True, env=os.environ)
-
-                if result.returncode == 0:
-                    print(f"Processing of {pdf_path} completed successfully.")
-                    break  # Exit the loop after successful processing
-                else:
-                    print(f"Processing of {pdf_path} failed with return code {result.returncode}. Retrying...")
-
+                event_handler.process_pdf(pdf_path)
             except Exception as e:
-                print(f"Failed to process {pdf_path}: {e}. Retrying...")
+                print(f"Error processing {pdf_path} during retry: {e}")
 
-            retries += 1
-            time.sleep(retry_delay)
-
-        # If all retries failed, log the issue and move the file to an error directory (optional)
-        if retries == max_retries:
-            print(f"Failed to process {pdf_path} after {max_retries} attempts.")
-        else:
-            # Ensure the PDF is released before attempting deletion
-            safe_delete(pdf_path)
+        time.sleep(retry_delay)
 
 def start_monitoring(folder_to_monitor):
+    global event_handler
     event_handler = PDFHandler(folder_to_monitor)
     observer = Observer()
     observer.schedule(event_handler, path=folder_to_monitor, recursive=False)
@@ -148,6 +149,7 @@ def start_monitoring(folder_to_monitor):
     try:
         while True:
             time.sleep(2)
+            retry_unprocessed_pdfs(folder_to_monitor)  # Check for unprocessed PDFs
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
