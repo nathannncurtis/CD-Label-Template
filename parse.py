@@ -9,8 +9,8 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 # Suppress all output
-#sys.stdout = open(os.devnull, 'w')
-#sys.stderr = open(os.devnull, 'w')
+sys.stdout = open(os.devnull, 'w')
+sys.stderr = open(os.devnull, 'w')
 
 # Determine the directory where parse.py (or parse.exe) is located
 if getattr(sys, 'frozen', False):  # Check if running in a frozen state
