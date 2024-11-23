@@ -4,13 +4,12 @@ import re
 import time
 import fitz
 import subprocess
-import logging
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 # Suppress all output
-sys.stdout = open(os.devnull, 'w')
-sys.stderr = open(os.devnull, 'w')
+#sys.stdout = open(os.devnull, 'w')
+#sys.stderr = open(os.devnull, 'w')
 
 # Determine the directory where parse.py (or parse.exe) is located
 if getattr(sys, 'frozen', False):  # Check if running in a frozen state
@@ -122,23 +121,20 @@ class PDFHandler(FileSystemEventHandler):
         # Ensure the PDF is released before attempting deletion
         safe_delete(pdf_path)
 
-def retry_unprocessed_pdfs(folder_to_monitor, retry_delay=5):
+def retry_unprocessed_pdfs(folder_to_monitor):
     """Continuously retries unprocessed PDFs until the folder is clear."""
     while True:
         pdf_files = [f for f in os.listdir(folder_to_monitor) if f.endswith('.pdf')]
-        if not pdf_files:
-            print("All PDFs have been processed.")
-            break
-
-        print(f"Retrying unprocessed PDFs: {pdf_files}")
-        for pdf_file in pdf_files:
-            pdf_path = os.path.join(folder_to_monitor, pdf_file)
-            try:
-                event_handler.process_pdf(pdf_path)
-            except Exception as e:
-                print(f"Error processing {pdf_path} during retry: {e}")
-
-        time.sleep(retry_delay)
+        if pdf_files:
+            print(f"Retrying unprocessed PDFs: {pdf_files}")
+            for pdf_file in pdf_files:
+                pdf_path = os.path.join(folder_to_monitor, pdf_file)
+                try:
+                    event_handler.process_pdf(pdf_path)
+                except Exception as e:
+                    print(f"Error processing {pdf_path}: {e}")
+        else:
+            time.sleep(2)  # Check periodically even if the folder is clear
 
 def start_monitoring(folder_to_monitor):
     global event_handler
@@ -147,9 +143,7 @@ def start_monitoring(folder_to_monitor):
     observer.schedule(event_handler, path=folder_to_monitor, recursive=False)
     observer.start()
     try:
-        while True:
-            time.sleep(2)
-            retry_unprocessed_pdfs(folder_to_monitor)  # Check for unprocessed PDFs
+        retry_unprocessed_pdfs(folder_to_monitor)  # Continuous retry loop
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
